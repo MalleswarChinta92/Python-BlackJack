@@ -41,16 +41,17 @@ class Hand():
         self.value += card.value
     def adjustAces(self):
         pass
-    def isDirectBlackJack(self):
+    def isPerfectBlackJack(self):
         if len(self.cards) == 2:
             if (self.cards[0].value + self.cards[1].value == 21):
                 return True
         return False
 
 class Chips():
-    def __init__(self,total=100,bet=5):
+    def __init__(self,total=100):
         self.total = total
         self.bet = bet
+        self.startedWith = total
     def winBet(self):
         print(f'User won a bet of {self.bet}')
         self.total += self.bet
@@ -67,6 +68,21 @@ def showPartialCards(cards):
     print('-----------------')
     card = cards[0]
     print(card)
+
+def cashChips():
+    while True:
+        try:
+            cash = int(input('Give cash '))
+        except:
+            print('Give a numerical value')
+            continue
+        else:
+            if (cash == 0):
+                print('Cash cannot be zero')
+                continue
+            else:
+                break
+    return cash
 
 def bet():
     while True:
@@ -92,7 +108,8 @@ values = {'Two': 2, 'Three': 3, 'Four': 4, 'Five': 5, 'Six': 6,
 'Seven': 7, 'Eight': 8, 'Nine': 9, 'Jack': 10, 'Queen': 10, 'King': 10,
 'Ace': 11}
 
-chips = Chips()
+cash = cashChips()
+chips = Chips(cash)
 
 while True:
     if chips.total == 0:
@@ -114,7 +131,8 @@ while True:
     print(hand.value)
 
     while playerWin == False and dealerWin == False:
-        if (hand.isDirectBlackJack()):
+        if (hand.isPerfectBlackJack()):
+            print('Perfect Blackjack\n')
             playerWin = True
             chips.bet = chips.bet * 1.5
             chips.winBet()
@@ -128,17 +146,31 @@ while True:
             chips.loseBet()
             break
         while True:
-            try:
-                userAction = int(input('choose 1 for HIT 2 for Stand'))
-            except TypeError:
-                print('please select 1 or 2')
-                continue
-            else:
-                if userAction != 1 and userAction != 2:
-                    print('please select 1 or 2')
+            canDoubleDown = len(hand.cards) == 2 and chips.total >= 2*chips.bet
+            if canDoubleDown:
+                try:
+                    userAction = int(input('choose \n1 for HIT \n2 for Stand \n3 for DoubleDown\n'))
+                except TypeError:
+                    print('please select 1 or 2 or 3')
                     continue
                 else:
-                    break
+                    if userAction != 1 and userAction != 2 and userAction != 3:
+                        print('please select 1 or 2 or 3')
+                        continue
+                    else:
+                        break
+            else:
+                try:
+                    userAction = int(input('choose \n1 for HIT \n2 for Stand\n'))
+                except:
+                    print('please select 1 or 2 or 3')
+                    continue
+                else:
+                    if userAction != 1 and userAction != 2:
+                        print('please select 1 or 2 or 3')
+                        continue
+                    else:
+                        break
         if(userAction == 1):
             drawCard = deck.drawCard()
             print('HIT with')
@@ -147,7 +179,7 @@ while True:
             showFullCards(hand.cards)
             print(hand.value)
             continue
-        else:
+        elif(userAction == 2):
             dealerValue = 0
             print('\n dealer cards')
             showFullCards(dealerCards)
@@ -175,8 +207,39 @@ while True:
             else:
                 print('Push')
             break
+        else:
+            chips.bet = 2 * chips.bet
+            print('bet is now {chips.bet}')
+            drawCard = deck.drawCard()
+            print('Player HIT with')
+            print(drawCard)
+            hand.addCard(drawCard)
+            print('Player cards')
+            showFullCards(hand.cards)
+            print('Dealer cards')
+            showFullCards(dealerCards)
+            dealerValue = 0
+            for card in dealerCards:
+                dealerValue += card.value
+            print(f'Dealer {dealerValue}')
+            print(f'Player {hand.value}')
+            if(dealerValue > hand.value):
+                dealerWin = True
+                chips.loseBet()
+            elif(hand.value > dealerValue):
+                playerWin = True
+                chips.winBet()
+            else:
+                print('Push')
+            break
+
     playAgain = input('input Y to play again')
     if(playAgain == 'Y'):
         continue
     else:
+        winLoss = chips.total - chips.startedWith
+        if (winLoss > 0):
+            print(f'You\'ve won {abs(winLoss)}')
+        else:
+            print(f'You\'ve lost {abs(winLoss)}')
         break
